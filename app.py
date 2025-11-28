@@ -24,6 +24,15 @@ def predict_api():
     output = rfmodel.predict(final_data)[0]
     return jsonify({"prediction": str(output)})
 
+
+@app.route('/predict',methods =['POST'])
+def predict():
+    data =[float(x) for x in request.form.values()]
+    final_input = (np.array(data).reshape(1,-1))
+    print(final_input)
+    output = rfmodel.predict(final_input)[0]
+    return render_template("home.html",prediction_text = "The House price prediction is {}".format(output))
+
 # ---- THIS WAS THE PROBLEM ----
 if __name__ == "__main__":
     print("STARTING SERVER")
