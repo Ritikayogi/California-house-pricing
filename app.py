@@ -2,6 +2,15 @@ import pickle
 from flask import Flask, request, jsonify, render_template
 import numpy as np
 import pandas as pd
+import gdown
+import os
+
+model_url = "https://drive.google.com/drive/u/0/home"
+model_path = "rfmodel.pkl"
+
+if not os.path.exists(model_path):
+    gdown.download(model_url, model_path, quiet=False)
+
 
 print("FILE EXECUTED")  # test line
 
