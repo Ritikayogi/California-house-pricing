@@ -1,48 +1,64 @@
-import pickle
-from flask import Flask, request, jsonify, render_template
 import numpy as np
-import pandas as pd
+from flask import Flask, request, render_template, jsonify
+import pickle
 import gdown
 import os
 
-model_url = "https://drive.google.com/drive/u/0/home"
+app = Flask(__name__)
+
+# -----------------------------
+# DOWNLOAD MODEL FROM GOOGLE DRIVE
+# -----------------------------
+model_url = "https://drive.google.com/uc?export=download&id=1wuu4pZYFi7zOJ1jQ1TL28L4QUzfqkuZb"
 model_path = "rfmodel.pkl"
 
 if not os.path.exists(model_path):
+    print("Downloading model...")
     gdown.download(model_url, model_path, quiet=False)
 
+# -----------------------------
+# LOAD MODEL
+# -----------------------------
+print("Loading model...")
+rfmodel = pickle.load(open(model_path, "rb"))
+print("Model loaded successfully!")
 
-print("FILE EXECUTED")  # test line
 
-app = Flask(__name__)
-
-# Load the model
-rfmodel = pickle.load(open('rfmodel.pkl', 'rb'))
-
-@app.route('/')
+# -----------------------------
+# HOME PAGE
+# -----------------------------
+@app.route("/")
 def home():
-    return render_template('home.html')
+    return render_template("home.html")
 
-@app.route('/predict_api', methods=['POST'])
+
+# -----------------------------
+# PREDICT FROM HTML FORM
+# -----------------------------
+@app.route("/predict", methods=["POST"])
+def predict():
+    data = [float(x) for x in request.form.values()]
+    final_input = np.array(data).reshape(1, -1)
+
+    output = rfmodel.predict(final_input)[0]
+    return render_template("home.html",
+                           prediction_text=f"Predicted California House Price: {output}")
+
+
+# -----------------------------
+# PREDICT FROM JSON
+# -----------------------------
+@app.route("/predict_api", methods=["POST"])
 def predict_api():
-    data = request.json['data']
-    print(data)
-    final_data = np.array(list(data.values())).reshape(1, -1)
-    print(final_data)
-
-    output = rfmodel.predict(final_data)[0]
+    data = request.json["data"]
+    final_input = np.array(list(data.values())).reshape(1, -1)
+    output = rfmodel.predict(final_input)[0]
     return jsonify({"prediction": str(output)})
 
 
-@app.route('/predict',methods =['POST'])
-def predict():
-    data =[float(x) for x in request.form.values()]
-    final_input = (np.array(data).reshape(1,-1))
-    print(final_input)
-    output = rfmodel.predict(final_input)[0]
-    return render_template("home.html",prediction_text = "The House price prediction is {}".format(output))
-
-# ---- THIS WAS THE PROBLEM ----
+# -----------------------------
+# LOCAL RUN
+# -----------------------------
 if __name__ == "__main__":
-    print("STARTING SERVER")
+    print("FILE EXECUTED")
     app.run(debug=True)
